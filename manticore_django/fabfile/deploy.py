@@ -89,6 +89,7 @@ def load_environment(conf, show_info):
     env.manage = "%s/bin/python %s/project/manage.py" % (env.venv_path, env.venv_path)
 
     env.domains = conf.get("DOMAINS", [conf.get("LIVE_HOSTNAME", env.application_hosts[0])])
+    env.nginx_valid_hosts = "|".join(env.domains)
     env.domains_nginx = " ".join(env.domains)
     env.domains_python = ", ".join(["'%s'" % s for s in env.domains])
     env.ssl_disabled = "#" if len(env.domains) > 1 or conf.get("SSL_DISABLED", True) else ""
@@ -842,10 +843,10 @@ def createapp1():
                 create_virtual_env = True
         else:  # Else, the virtual environment doesn't exist and we need to create ite
             create_virtual_env = True
-        
+
         if create_virtual_env:
             run("virtualenv %s --distribute" % env.proj_name)
-        
+
         # If the project has not been cloned yet from git, we need to intialize it and it's submodules
         if not exists(env.proj_path):
             # If we have a deployed ssh key, use that for cloning from git
@@ -1096,7 +1097,7 @@ def upgradedb():
     backupdb()
     installdb()
     sudo("/etc/init.d/postgresql stop")
-    run("su - postgres -c \"/usr/lib/postgresql/9.2/bin/pg_upgrade -u postgres -b %s -B %s -d %s -D %s -o '-D %s' -O '-D %s'\"" 
+    run("su - postgres -c \"/usr/lib/postgresql/9.2/bin/pg_upgrade -u postgres -b %s -B %s -d %s -D %s -o '-D %s' -O '-D %s'\""
         % ("/usr/lib/postgresql/8.4/bin/","/usr/lib/postgresql/9.2/bin/","/var/lib/postgresql/8.4/main/","/var/lib/postgresql/9.2/main/","/etc/postgresql/8.4/main/","/etc/postgresql/9.2/main/"))
     sudo("apt-get remove postgresql-8.4")
     sudo("rm /usr/lib/postgresql/8.4/bin/*") # remove old database version to prevent conflict in running postgresql commands
@@ -1167,7 +1168,7 @@ def removedb():
     """
     Removes all data from the database. USE WITH CAUTION.
     """
-    with settings(warn_only=True):    
+    with settings(warn_only=True):
         psql("DROP DATABASE IF EXISTS %s;" % env.proj_name)
         psql("DROP USER IF EXISTS %s;" % env.proj_name)
         psql("DROP USER IF EXISTS replicator%s;" % env.proj_name)
@@ -1408,7 +1409,7 @@ def rollbackapp():
             run("%s `cat last.commit`" % update)
         with cd(join(static(), "..")):
             run("tar -xf %s" % join(env.proj_path, "last.tar"))
-    
+
     restartapp()
     restart_celery()
 
