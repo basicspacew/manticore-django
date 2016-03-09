@@ -89,7 +89,10 @@ def load_environment(conf, show_info):
     env.manage = "%s/bin/python %s/project/manage.py" % (env.venv_path, env.venv_path)
 
     env.domains = conf.get("DOMAINS", [conf.get("LIVE_HOSTNAME", env.application_hosts[0])])
-    env.nginx_valid_hosts = "|".join(env.domains)
+    if len(env.domains) > 1:
+        env.nginx_valid_hosts = "|".join(env.domains)
+    else:
+        env.nginx_valid_hosts = env.domains[0]
     env.domains_nginx = " ".join(env.domains)
     env.domains_python = ", ".join(["'%s'" % s for s in env.domains])
     env.ssl_disabled = "#" if len(env.domains) > 1 or conf.get("SSL_DISABLED", True) else ""
