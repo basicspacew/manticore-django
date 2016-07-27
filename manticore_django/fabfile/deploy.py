@@ -1326,9 +1326,9 @@ def deployapp2(collect_static=True):
                 manage("compress")
                 # TODO: use this only if using Rackspace's cloudfiles
                 # manage("syncfiles -e'media/' --static")
-
-        manage("syncdb --noinput")
-        manage("migrate --noinput")
+        
+       # manage("syncdb --noinput")
+       # manage("migrate --noinput")
     restartapp()
     restart_celery()
 
@@ -1490,6 +1490,12 @@ def all():
 # Environment tasks
 ########################
 
+@task
+@log_call
+def aws_development(show_info=False):
+    env.mode = "aws_development"
+    load_environment(env.settings[env.mode], show_info)
+    
 @task
 @log_call
 def development(show_info=False):
